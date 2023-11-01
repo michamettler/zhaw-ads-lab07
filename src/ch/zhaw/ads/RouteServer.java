@@ -1,30 +1,69 @@
 package ch.zhaw.ads;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.StringTokenizer;
 
 public class RouteServer implements CommandExecutor {
     /**
-    build the graph given a text file with the topology
-    */
-    public Graph<DijkstraNode> createGraph(String topo) throws Exception {
-        // TODO implement
+     * build the graph given a text file with the topology
+     */
+    public Graph<DijkstraNode, Edge> createGraph(String topo) throws Exception {
+        Graph<DijkstraNode, Edge> graph = new AdjListGraph<>(DijkstraNode.class, Edge.class);
+        try (BufferedReader br = new BufferedReader(new FileReader("src/ch/zhaw/ads/Swiss.txt"))) {
+            var line = br.readLine();
+            while (line != null) {
+                String[] routeInfo = line.split(" ");
+                graph.addNode(routeInfo[0]);
+                graph.addNode(routeInfo[1]);
+                graph.addEdge(routeInfo[0], routeInfo[1], Integer.parseInt(routeInfo[2]));
+                graph.addEdge(routeInfo[1], routeInfo[0], Integer.parseInt(routeInfo[2]));
+                line = br.readLine();
+            }
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+        return graph;
     }
 
 
     /**
-    apply the dijkstra algorithm
-    */
-    public void dijkstraRoute(Graph<DijkstraNode> graph, String from, String to) {
-        // TODO implement
+     * apply the dijkstra algorithm
+     */
+    public void dijkstraRoute(Graph<DijkstraNode, Edge> graph, String from, String to) {
+        for (DijkstraNode node : graph.getNodes()) {
+            node.setDist(Double.MAX_VALUE);
+        }
+        Queue<DijkstraNode> pq = new PriorityQueue<>();
+        DijkstraNode start = graph.findNode(from);
+        start.setDist(0);
+        pq.add(start);
+
+        while(!pq.isEmpty()) {
+            DijkstraNode curr = pq.poll();
+            if (curr.equals(graph.findNode(to))) return;
+            curr.setMark(true);
+            for (Edge edge : curr.getEdges()) {
+                var dest = (DijkstraNode) edge.getDest();
+                if (!dest.getMark()) {
+                    double dist = curr.getDist() + edge.getWeight();
+                    if (dist < dest.getDist()) {
+                        dest.setDist(dist);
+                        dest.setPrev(curr);
+                        pq.add(dest);
+                    }
+                }
+            }
+        }
     }
 
     /**
-    find the route in the graph after applied dijkstra
-    the route should be returned with the start town first
-    */
+     * find the route in the graph after applied dijkstra
+     * the route should be returned with the start town first
+     */
     public List<DijkstraNode> getRoute(Graph<DijkstraNode, Edge> graph, String to) {
         List<DijkstraNode> route = new LinkedList<>();
         DijkstraNode town = graph.findNode(to);
@@ -45,21 +84,21 @@ public class RouteServer implements CommandExecutor {
         return builder.toString();
     }
 
-    public static void main(String[] args)throws Exception {
+    public static void main(String[] args) throws Exception {
         String swiss = "Winterthur Zürich 25\n" +
-                    "Zürich Bern 126\n" +
-                    "Zürich Genf 277\n" +
-                    "Zürich Luzern 54\n" +
-                    "Zürich Chur 121\n" +
-                    "Zürich Berikon 16\n" +
-                    "Bern Genf 155\n" +
-                    "Genf Lugano 363\n" +
-                    "Lugano Luzern 206\n" +
-                    "Lugano Chur 152\n" +
-                    "Chur Luzern 146\n" +
-                    "Luzern Bern 97\n" +
-                    "Bern Berikon 102\n" +
-                    "Luzern Berikon 41\n";
+                "Zürich Bern 126\n" +
+                "Zürich Genf 277\n" +
+                "Zürich Luzern 54\n" +
+                "Zürich Chur 121\n" +
+                "Zürich Berikon 16\n" +
+                "Bern Genf 155\n" +
+                "Genf Lugano 363\n" +
+                "Lugano Luzern 206\n" +
+                "Lugano Chur 152\n" +
+                "Chur Luzern 146\n" +
+                "Luzern Bern 97\n" +
+                "Bern Berikon 102\n" +
+                "Luzern Berikon 41\n";
         RouteServer server = new RouteServer();
         System.out.println(server.execute(swiss));
     }

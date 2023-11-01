@@ -22,7 +22,7 @@ public class ADS7_4_test {
     String fileToTest = "RouteServer.java";
 
     @BeforeEach
-    private void init() throws Exception {
+    public void init() throws Exception {
         String swiss = "Winterthur Zürich 25\n" +
                 "Zürich Bern 126\n" +
                 "Zürich Genf 277\n" +
