@@ -1,11 +1,6 @@
 package ch.zhaw.ads;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.*;
 
 public class RouteServer implements CommandExecutor {
     /**
@@ -13,18 +8,17 @@ public class RouteServer implements CommandExecutor {
      */
     public Graph<DijkstraNode, Edge> createGraph(String topo) throws Exception {
         Graph<DijkstraNode, Edge> graph = new AdjListGraph<>(DijkstraNode.class, Edge.class);
-        try (BufferedReader br = new BufferedReader(new FileReader("src/ch/zhaw/ads/Swiss.txt"))) {
-            var line = br.readLine();
-            while (line != null) {
-                String[] routeInfo = line.split(" ");
+        Scanner scanner = new Scanner(topo);
+        while (scanner.hasNextLine()) {
+            String[] routeInfo = scanner.nextLine().split(" ");
+            try {
                 graph.addNode(routeInfo[0]);
                 graph.addNode(routeInfo[1]);
                 graph.addEdge(routeInfo[0], routeInfo[1], Integer.parseInt(routeInfo[2]));
                 graph.addEdge(routeInfo[1], routeInfo[0], Integer.parseInt(routeInfo[2]));
-                line = br.readLine();
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
             }
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
         }
         return graph;
     }
@@ -42,7 +36,7 @@ public class RouteServer implements CommandExecutor {
         start.setDist(0);
         pq.add(start);
 
-        while(!pq.isEmpty()) {
+        while (!pq.isEmpty()) {
             DijkstraNode curr = pq.poll();
             if (curr.equals(graph.findNode(to))) return;
             curr.setMark(true);
